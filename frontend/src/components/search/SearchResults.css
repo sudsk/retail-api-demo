@@ -1,0 +1,21 @@
+.search-results {
+  flex: 1;
+}
+
+.results-header {
+  margin-bottom: 1.5rem;
+}
+
+.results-header h2 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.query-text {
+  color: var(--primary-color);
+}
+
+.results-count {
+  color: #666;
+  font-size: 0.875rem;
+}
