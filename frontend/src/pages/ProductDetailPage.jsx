@@ -1,73 +1,130 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import Header from '../components/layout/Header';
-import Navigation from '../components/layout/# Retail API Demo - Complete Code Implementation (FastAPI + React)
+import Navigation from '../components/layout/Navigation';
+import Footer from '../components/layout/Footer';
+import ProductImage from '../components/product/ProductImage';
+import AlsoBoughtSection from '../components/recommendations/AlsoBoughtSection';
+import SimilarProductsSection from '../components/recommendations/SimilarProductsSection';
+import RecentlyViewedSection from '../components/recommendations/RecentlyViewedSection';
+import Loader from '../components/common/Loader';
+import ErrorMessage from '../components/common/ErrorMessage';
+import useProduct from '../hooks/useProduct';
+import './ProductDetailPage.css';
 
-## Project Setup
+const ProductDetailPage = () => {
+  const { productId } = useParams();
+  const { product, loading, error } = useProduct(productId);
 
-### Initialize Repository
-````bash
-mkdir retail-api-demo
-cd retail-api-demo
-git init
-````
+  const formatPrice = (priceInfo) => {
+    if (!priceInfo) return 'Price not available';
+    const { currency_code, price, original_price } = priceInfo;
+    const symbol = currency_code === 'USD' ? '
+ : currency_code;
+    
+    return (
+      <div className="product-price">
+        <span className="current-price">{symbol}{price?.toFixed(2)}</span>
+        {original_price && original_price > price && (
+          <>
+            <span className="original-price">{symbol}{original_price.toFixed(2)}</span>
+            <span className="discount">
+              Save {symbol}{(original_price - price).toFixed(2)}
+            </span>
+          </>
+        )}
+      </div>
+    );
+  };
 
----
+  return (
+    <div className="product-detail-page">
+      <Header />
+      <Navigation />
+      
+      <main className="container page-content">
+        {loading && <Loader message="Loading product..." />}
+        
+        {error && <ErrorMessage message={error} />}
+        
+        {product && !loading && !error && (
+          <>
+            <div className="product-detail">
+              <div className="product-images">
+                <ProductImage 
+                  images={product.images} 
+                  alt={product.title}
+                  className="main-product-image"
+                />
+              </div>
 
-## Root Level Files
+              <div className="product-info">
+                <h1 className="product-name">{product.title}</h1>
+                
+                {product.brands && product.brands.length > 0 && (
+                  <p className="product-brand">Brand: {product.brands[0]}</p>
+                )}
 
-### `README.md`
-````markdown
-# Vertex AI Retail API Demo
+                {formatPrice(product.price_info)}
 
-Generic e-commerce demo showcasing Google Cloud Vertex AI Search for Commerce - integrating both Retail Search and Recommendations API.
+                {product.availability && (
+                  <div className={`product-availability ${product.availability.toLowerCase()}`}>
+                    <span className="availability-label">Availability:</span>
+                    <span className="availability-status">
+                      {product.availability.replace(/_/g, ' ')}
+                    </span>
+                  </div>
+                )}
 
-## Features
+                {product.description && (
+                  <div className="product-description">
+                    <h2>Description</h2>
+                    <p>{product.description}</p>
+                  </div>
+                )}
 
-- **Retail Search**: Full-text search with autocomplete and faceted filtering
-- **Recommendations**: Multiple recommendation models (Recently Viewed, Similar Products, Frequently Bought Together, etc.)
-- **Realistic UX**: Complete e-commerce experience with categories, product pages, and search
-- **Customizable**: Easy branding configuration for different clients
+                {product.categories && product.categories.length > 0 && (
+                  <div className="product-categories">
+                    <h3>Categories:</h3>
+                    <div className="category-tags">
+                      {product.categories.map((category, index) => (
+                        <span key={index} className="category-tag">{category}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-## Tech Stack
+                {product.attributes && Object.keys(product.attributes).length > 0 && (
+                  <div className="product-attributes">
+                    <h3>Specifications</h3>
+                    <table className="attributes-table">
+                      <tbody>
+                        {Object.entries(product.attributes).map(([key, values]) => (
+                          <tr key={key}>
+                            <td className="attribute-name">{key}</td>
+                            <td className="attribute-value">
+                              {Array.isArray(values) ? values.join(', ') : values}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
 
-- **Backend**: FastAPI (Python 3.9+)
-- **Frontend**: React 18+
-- **APIs**: Google Cloud Vertex AI Retail API
+            <AlsoBoughtSection productId={productId} />
+            <SimilarProductsSection productId={productId} />
+            <RecentlyViewedSection />
+          </>
+        )}
+      </main>
 
-## Quick Start
+      <Footer />
+    </div>
+  );
+};
 
-### Prerequisites
+export default ProductDetailPage;
 
-- Python 3.9+
-- Node.js 18+
-- GCP Project with Retail API enabled
-- Service account key with Retail Editor role
-
-### Backend Setup
-```bash
-cd backend
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
-cp .env.example .env
-# Edit .env with your GCP project details
-uvicorn main:app --reload
-```
-
-### Frontend Setup
-```bash
-cd frontend
-npm install
-cp .env.example .env
-# Edit .env with backend URL
-npm start
-```
-
-### Data Upload
-
-See `docs/DATA_UPLOAD.md` for instructions on uploading catalog and events via GCP Console.
-
-## Architecture
-````
-Frontend (React) → Backend (FastAPI/Python) → Google Retail API
