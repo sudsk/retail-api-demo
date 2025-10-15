@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Node
+node_modules/
+npm-debug.log*
+package-lock.json
+
+# Environment variables
+.env
+.env.local
+.env.production
+*/.env
+*/.env.local
+
+# GCP Credentials
+*.json
+!branding.json
+!package.json
+service-account*.json
+credentials/
+
+# Build outputs
+build/
+dist/
+*/build/
+*/dist/
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Testing
+coverage/
+.pytest_cache/
+.nyc_output/
+htmlcov/
