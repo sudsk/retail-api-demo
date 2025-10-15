@@ -1,0 +1,34 @@
+.search-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.filters-sidebar {
+  position: relative;
+}
+
+.results-container {
+  min-width: 0;
+}
+
+.results-controls {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 968px) {
+  .search-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .filters-sidebar {
+    order: 2;
+  }
+
+  .results-container {
+    order: 1;
+  }
+}
