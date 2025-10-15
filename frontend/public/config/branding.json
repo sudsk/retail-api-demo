@@ -1,0 +1,27 @@
+{
+  "siteName": "Demo Hardware Store",
+  "tagline": "Everything for your home improvement projects",
+  "logo": {
+    "url": "/assets/logo.svg",
+    "alt": "Company Logo"
+  },
+  "theme": {
+    "primaryColor": "#1976d2",
+    "secondaryColor": "#dc004e",
+    "accentColor": "#ff9800",
+    "fontFamily": "system-ui, -apple-system, sans-serif"
+  },
+  "categories": [
+    { "name": "Building Materials", "slug": "building-materials" },
+    { "name": "Tools & Equipment", "slug": "tools" },
+    { "name": "Kitchens & Bathrooms", "slug": "kitchens-bathrooms" },
+    { "name": "Doors & Windows", "slug": "doors-windows" },
+    { "name": "Electrical & Lighting", "slug": "electrical" },
+    { "name": "Plumbing & Heating", "slug": "plumbing" }
+  ],
+  "features": {
+    "showCart": false,
+    "showRecentlyViewed": true,
+    "showRecommendations": true
+  }
+}
