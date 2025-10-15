@@ -33,3 +33,28 @@ pip install -r requirements.txt
 cp .env.example .env
 # Edit .env with your GCP project details
 uvicorn main:app --reload
+
+### Frontend Setup
+```bash
+cd frontend
+npm install
+cp .env.example .env
+# Edit .env with backend URL
+npm start
+```
+
+### Data Upload
+
+See `docs/DATA_UPLOAD.md` for instructions on uploading catalog and events via GCP Console.
+
+## Architecture
+
+Frontend (React) → Backend (FastAPI/Python) → Google Retail API
+
+## Customization
+
+Edit `frontend/public/config/branding.json` to customize for different clients.
+
+## Deployment
+
+See `deployment/README.md` for Cloud Run deployment instructions.
