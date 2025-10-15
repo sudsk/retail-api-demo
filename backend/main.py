@@ -1,66 +1,77 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
-import uvicorn
+from pydantic import BaseModel
+from typing import Optional, List
+import os
 
-from config import settings
-from routers import search_router, products_router, recommendations_router
+from services.search_service import search_products, autocomplete_search
+from services.recommendations_service import get_recommendations
 
-# Lifespan context manager for startup/shutdown events
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Startup
-    print(f"🚀 Starting Retail API Backend")
-    print(f"📊 Environment: {settings.ENVIRONMENT}")
-    print(f"🔧 GCP Project: {settings.GCP_PROJECT_ID}")
-    yield
-    # Shutdown
-    print("👋 Shutting down Retail API Backend")
+app = FastAPI(title="Retail API Demo - Minimal")
 
-# Initialize FastAPI app
-app = FastAPI(
-    title="Retail API Demo",
-    description="Backend API for Vertex AI Retail Search and Recommendations",
-    version="1.0.0",
-    lifespan=lifespan
-)
-
-# CORS middleware
+# CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Health check endpoint
+# Models
+class SearchRequest(BaseModel):
+    query: str
+    page_size: int = 20
+    visitor_id: Optional[str] = None
+
+class RecommendationsRequest(BaseModel):
+    model: str
+    product_id: Optional[str] = None
+    visitor_id: Optional[str] = None
+    page_size: int = 6
+
+# Routes
 @app.get("/health")
-async def health_check():
-    return {
-        "status": "healthy",
-        "service": "retail-api-backend",
-        "environment": settings.ENVIRONMENT
-    }
+def health():
+    return {"status": "healthy"}
 
-# Include routers
-app.include_router(search_router, prefix="/api/search", tags=["Search"])
-app.include_router(products_router, prefix="/api/products", tags=["Products"])
-app.include_router(recommendations_router, prefix="/api/recommendations", tags=["Recommendations"])
+@app.post("/api/search")
+async def search(req: SearchRequest):
+    try:
+        results = await search_products(
+            query=req.query,
+            page_size=req.page_size,
+            visitor_id=req.visitor_id
+        )
+        return {"success": True, "data": results}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-# Root endpoint
-@app.get("/")
-async def root():
-    return {
-        "message": "Retail API Demo Backend",
-        "version": "1.0.0",
-        "docs": "/docs"
-    }
+@app.get("/api/search/autocomplete")
+async def autocomplete(query: str, visitor_id: Optional[str] = None):
+    try:
+        results = await autocomplete_search(query, visitor_id)
+        return {"success": True, "data": results}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-if __name__ == "__main__":
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=settings.PORT,
-        reload=settings.ENVIRONMENT == "development"
-    )
+@app.post("/api/recommendations")
+async def recommendations(req: RecommendationsRequest):
+    try:
+        results = await get_recommendations(
+            model=req.model,
+            product_id=req.product_id,
+            visitor_id=req.visitor_id,
+            page_size=req.page_size
+        )
+        return {"success": True, "data": results}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/product/{product_id}")
+async def get_product(product_id: str):
+    # Simplified - fetch from search results
+    results = await search_products(query=product_id, page_size=1)
+    if results and results.get('results'):
+        return {"success": True, "data": results['results'][0]}
+    raise HTTPException(status_code=404, detail="Product not found")
