@@ -5,13 +5,16 @@ import Loader from '../common/Loader';
 import './RecommendedProducts.css';
 
 const RecommendedProducts = ({ model, productId = null, title }) => {
-  const { recommendations, loading, getRecommendations } = useRecommendations();
+  const { recommendations, loading, error, getRecommendations } = useRecommendations();
 
   useEffect(() => {
     getRecommendations({
       model,
       productId,
       pageSize: 6
+    }).catch(err => {
+      // Silently handle errors - recommendations are optional
+      console.warn(`Recommendations not available for ${model}:`, err);
     });
   }, [model, productId, getRecommendations]);
 
@@ -19,7 +22,8 @@ const RecommendedProducts = ({ model, productId = null, title }) => {
     return <Loader message="Loading recommendations..." />;
   }
 
-  if (!recommendations || recommendations.length === 0) {
+  // Don't show error message - recommendations are optional
+  if (error || !recommendations || recommendations.length === 0) {
     return null;
   }
 
