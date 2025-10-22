@@ -19,8 +19,7 @@ const ProductDetailPage = () => {
   const formatPrice = (priceInfo) => {
     if (!priceInfo) return 'Price not available';
     const { currency_code, price, original_price } = priceInfo;
-    const symbol = currency_code === 'USD' ? '
- : currency_code;
+    const symbol = currency_code === 'USD' ? '$' : currency_code;
     
     return (
       <div className="product-price">
@@ -127,4 +126,3 @@ const ProductDetailPage = () => {
 };
 
 export default ProductDetailPage;
-
