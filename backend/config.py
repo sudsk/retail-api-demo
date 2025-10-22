@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     # GCP Configuration
     GCP_PROJECT_ID: str
     GCP_REGION: str = "us-central1"
-    GOOGLE_APPLICATION_CREDENTIALS: str = "./service-account-key.json"
+    GOOGLE_APPLICATION_CREDENTIALS: Optional[str] = None  
     
     # Retail API Configuration
     RETAIL_CATALOG_ID: str = "default_catalog"
@@ -60,5 +60,6 @@ settings = Settings()
 if isinstance(settings.ALLOWED_ORIGINS, str):
     settings.ALLOWED_ORIGINS = parse_origins(settings.ALLOWED_ORIGINS)
 
-# Set Google credentials environment variable
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = settings.GOOGLE_APPLICATION_CREDENTIALS
+# Only set credentials env var if path is provided
+if settings.GOOGLE_APPLICATION_CREDENTIALS:
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = settings.GOOGLE_APPLICATION_CREDENTIALS
