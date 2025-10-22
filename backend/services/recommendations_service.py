@@ -24,19 +24,28 @@ class RecommendationsService:
         serving_config = self._get_serving_config(model)
         placement = settings.get_placement_path(serving_config)
         
-        # Build user event for context
+        # Determine event type based on model
+        # Models that require product_id use detail-page-view
+        # Models that don't use home-page-view
+        requires_product = model in ['similar_items', 'frequently_bought_together']
+        
+        # Build product details only if product_id is provided and required
         product_details = []
-        if product_id:
+        if product_id and requires_product:
             product_details.append(
                 ProductDetail(
                     product=Product(id=product_id)
                 )
             )
         
+        # Choose appropriate event type
+        event_type = "detail-page-view" if product_details else "home-page-view"
+        
+        # Build user event for context
         user_event = UserEvent(
-            event_type="detail-page-view",
+            event_type=event_type,
             visitor_id=visitor_id or self._generate_visitor_id(),
-            product_details=product_details
+            product_details=product_details if product_details else None
         )
         
         # Build request
@@ -67,8 +76,15 @@ class RecommendationsService:
             }
         
         except Exception as e:
-            print(f"Recommendations error: {e}")
-            raise
+            print(f"Recommendations error for model {model}: {e}")
+            # Return empty results instead of failing
+            return {
+                "results": [],
+                "attribution_token": "",
+                "missing_ids": [],
+                "validate_only": False,
+                "error": str(e)
+            }
     
     def get_available_models(self) -> List[Dict[str, Any]]:
         """Get available recommendation models"""
