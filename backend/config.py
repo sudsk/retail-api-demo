@@ -5,8 +5,8 @@ import os
 class Settings(BaseSettings):
     # GCP Configuration
     GCP_PROJECT_ID: str
-    GCP_REGION: str = "us-central1"
-    GOOGLE_APPLICATION_CREDENTIALS: Optional[str] = None  
+    GCP_REGION: str = "global"  # Changed to global
+    GOOGLE_APPLICATION_CREDENTIALS: Optional[str] = None  # Made optional for ADC
     
     # Retail API Configuration
     RETAIL_CATALOG_ID: str = "default_catalog"
@@ -31,8 +31,8 @@ class Settings(BaseSettings):
     
     @property
     def catalog_path(self) -> str:
-        """Build catalog path"""
-        return f"projects/{self.GCP_PROJECT_ID}/locations/{self.GCP_REGION}/catalogs/{self.RETAIL_CATALOG_ID}"
+        """Build catalog path - uses 'global' as location"""
+        return f"projects/{self.GCP_PROJECT_ID}/locations/global/catalogs/{self.RETAIL_CATALOG_ID}"
     
     @property
     def branch_path(self) -> str:
@@ -60,6 +60,6 @@ settings = Settings()
 if isinstance(settings.ALLOWED_ORIGINS, str):
     settings.ALLOWED_ORIGINS = parse_origins(settings.ALLOWED_ORIGINS)
 
-# Only set credentials env var if path is provided
+# Set Google credentials environment variable only if provided
 if settings.GOOGLE_APPLICATION_CREDENTIALS:
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = settings.GOOGLE_APPLICATION_CREDENTIALS
