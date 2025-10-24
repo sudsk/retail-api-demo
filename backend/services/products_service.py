@@ -33,6 +33,11 @@ class ProductsService:
         
         parent = settings.branch_path
         
+        print(f"\n📦 LIST PRODUCTS REQUEST:")
+        print(f"   Parent: {parent}")
+        print(f"   Filter: '{filter}'")
+        print(f"   Page size: {page_size}")
+        
         request = ListProductsRequest(
             parent=parent,
             page_size=page_size,
@@ -44,8 +49,21 @@ class ProductsService:
             response = self.product_client.list_products(request)
             
             products = []
+            count = 0
             for product in response:
-                products.append(self._convert_product_to_dict(product))
+                count += 1
+                product_dict = self._convert_product_to_dict(product)
+                
+                if count <= 3:  # Log first 3
+                    print(f"   Product {count}:")
+                    print(f"      ID: {product_dict.get('id')}")
+                    print(f"      Title: {product_dict.get('title')}")
+                    print(f"      Price: {product_dict.get('price_info')}")
+                    print(f"      Categories: {product_dict.get('categories')}")
+                
+                products.append(product_dict)
+            
+            print(f"✅ Listed {count} products")
             
             return {
                 "products": products,
@@ -53,7 +71,7 @@ class ProductsService:
             }
         
         except Exception as e:
-            print(f"List products error: {e}")
+            print(f"❌ List products error: {e}")
             raise
     
     def _convert_product_to_dict(self, product) -> Dict[str, Any]:
