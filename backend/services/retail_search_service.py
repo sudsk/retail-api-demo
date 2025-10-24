@@ -230,7 +230,7 @@ class RetailSearchService:
         return {
             "id": product_id,
             "name": product.name if hasattr(product, 'name') else '',
-            "title": product.title if product.title else f'Product {product_id}',
+            "title": product.title if product.title else '',  # Return empty string, not fallback
             "description": product.description if hasattr(product, 'description') else '',
             "categories": list(product.categories) if hasattr(product, 'categories') else [],
             "brands": list(product.brands) if hasattr(product, 'brands') else [],
