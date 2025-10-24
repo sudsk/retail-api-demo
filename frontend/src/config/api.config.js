@@ -12,6 +12,9 @@ export const API_ENDPOINTS = {
   // Recommendations
   recommendations: `${API_BASE_URL}/api/recommendations`,
   recommendationModels: `${API_BASE_URL}/api/recommendations/models`,
+
+  // Categories
+  categories: `${API_BASE_URL}/api/categories`,
 };
 
 export default API_BASE_URL;
