@@ -10,7 +10,7 @@ import Pagination from '../components/search/Pagination';
 import Loader from '../components/common/Loader';
 import ErrorMessage from '../components/common/ErrorMessage';
 import useSearch from '../hooks/useSearch';
-import useTheme from '../config/theme.config';
+import categoriesService from '../services/categories.service';
 import './CategoryPage.css';
 
 const CategoryPage = () => {
@@ -21,15 +21,50 @@ const CategoryPage = () => {
 
   const [sortBy, setSortBy] = useState('');
   const [selectedFilters, setSelectedFilters] = useState({});
+  const [categoryName, setCategoryName] = useState('');
+  const [categoriesLoaded, setCategoriesLoaded] = useState(false);
   
   const { results, facets, totalSize, loading, error, search } = useSearch();
-  const branding = useTheme();
 
-  const categoryName = branding?.categories?.find(
-    cat => cat.slug === categorySlug
-  )?.name || categorySlug;
+  // Fetch categories to get the actual category name from slug
+  useEffect(() => {
+    const fetchCategoryName = async () => {
+      try {
+        const categories = await categoriesService.getCategories();
+        const category = categories.find(cat => cat.slug === categorySlug);
+        
+        if (category) {
+          setCategoryName(category.name);
+        } else {
+          // Fallback: convert slug to title case
+          setCategoryName(
+            categorySlug
+              .split('-')
+              .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(' ')
+          );
+        }
+      } catch (err) {
+        console.error('Failed to fetch categories:', err);
+        // Fallback
+        setCategoryName(
+          categorySlug
+            .split('-')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ')
+        );
+      } finally {
+        setCategoriesLoaded(true);
+      }
+    };
+
+    fetchCategoryName();
+  }, [categorySlug]);
 
   useEffect(() => {
+    // Don't search until we have the category name
+    if (!categoriesLoaded || !categoryName) return;
+
     const offset = (page - 1) * pageSize;
     
     // Build filter string with category
@@ -37,8 +72,8 @@ const CategoryPage = () => {
     
     Object.entries(selectedFilters).forEach(([key, values]) => {
       if (values && values.length > 0) {
-        const filterValues = values.map(v => `"${v}"`).join(' OR ');
-        filterParts.push(`${key}: ${filterValues}`);
+        const filterValues = values.map(v => `"${v}"`).join(', ');
+        filterParts.push(`${key}: ANY(${filterValues})`);
       }
     });
     
@@ -51,7 +86,7 @@ const CategoryPage = () => {
       orderBy: sortBy,
       filter: filterString
     });
-  }, [categoryName, page, sortBy, selectedFilters, search, pageSize]);
+  }, [categoryName, categoriesLoaded, page, sortBy, selectedFilters, search, pageSize]);
 
   const handlePageChange = (newPage) => {
     searchParams.set('page', newPage.toString());
@@ -73,6 +108,19 @@ const CategoryPage = () => {
     searchParams.set('page', '1');
     setSearchParams(searchParams);
   };
+
+  if (!categoriesLoaded) {
+    return (
+      <div className="category-page">
+        <Header />
+        <Navigation />
+        <main className="container page-content">
+          <Loader message="Loading category..." />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="category-page">
