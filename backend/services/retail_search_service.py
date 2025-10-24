@@ -24,6 +24,12 @@ class RetailSearchService:
         
         placement = settings.get_placement_path(settings.RETAIL_SEARCH_PLACEMENT)
         
+        print(f"\n🔍 SEARCH REQUEST:")
+        print(f"   Query: '{query}'")
+        print(f"   Filter: '{filter}'")
+        print(f"   Page size: {page_size}, Offset: {offset}")
+        print(f"   Placement: {placement}")
+        
         # Build facet specs
         if not facet_specs:
             facet_specs = self._get_default_facet_specs()
@@ -43,12 +49,24 @@ class RetailSearchService:
         try:
             response = self.search_client.search(request)
             
+            print(f"✅ SEARCH RESPONSE:")
+            print(f"   Total products: {response.total_size}")
+            print(f"   Results returned: {len(list(response.results))}")
+            
             # Convert response to dict
             results = []
-            for result in response.results:
+            for idx, result in enumerate(response.results):
+                product_dict = self._convert_product_to_dict(result.product)
+                
+                if idx < 3:  # Log first 3 products
+                    print(f"   Product {idx + 1}:")
+                    print(f"      ID: {product_dict.get('id')}")
+                    print(f"      Title: {product_dict.get('title')}")
+                    print(f"      Price Info: {product_dict.get('price_info')}")
+                
                 results.append({
                     "id": result.id,
-                    "product": self._convert_product_to_dict(result.product)
+                    "product": product_dict
                 })
             
             facets = []
@@ -74,7 +92,8 @@ class RetailSearchService:
             }
         
         except Exception as e:
-            print(f"Search error: {e}")
+            print(f"\n❌ SEARCH ERROR: {e}")
+            print(f"   Error type: {type(e).__name__}")
             raise
     
     async def autocomplete(
@@ -147,59 +166,72 @@ class RetailSearchService:
         return f"visitor_{uuid.uuid4().hex[:16]}"
     
     def _convert_product_to_dict(self, product) -> Dict[str, Any]:
-            """Convert Product protobuf to dict"""
-            # Extract price info (API uses priceInfo, not price_info)
-            price_info = None
-            if hasattr(product, 'priceInfo') and product.priceInfo:
-                pi = product.priceInfo
-                price_info = {
-                    "currency_code": pi.currencyCode if hasattr(pi, 'currencyCode') else 'USD',
-                    "price": float(pi.price) if hasattr(pi, 'price') else 0.0,
-                    "original_price": float(pi.originalPrice) if hasattr(pi, 'originalPrice') else None,
-                    "cost": float(pi.cost) if hasattr(pi, 'cost') else None
-                }
-            elif hasattr(product, 'price_info') and product.price_info:
-                # Fallback for snake_case
-                pi = product.price_info
-                price_info = {
-                    "currency_code": pi.currency_code if hasattr(pi, 'currency_code') else 'USD',
-                    "price": float(pi.price) if hasattr(pi, 'price') else 0.0,
-                    "original_price": float(pi.original_price) if hasattr(pi, 'original_price') else None,
-                    "cost": float(pi.cost) if hasattr(pi, 'cost') else None
-                }
-            
-            # Extract images
-            images = []
-            if hasattr(product, 'images') and product.images:
-                for img in product.images:
-                    images.append({
-                        "uri": img.uri if hasattr(img, 'uri') else '',
-                        "height": img.height if hasattr(img, 'height') else 0,
-                        "width": img.width if hasattr(img, 'width') else 0
-                    })
-            
-            # Extract attributes
-            attributes = {}
-            if hasattr(product, 'attributes') and product.attributes:
-                for key, value in product.attributes.items():
-                    if hasattr(value, 'text') and value.text:
-                        attributes[key] = list(value.text)
-                    elif hasattr(value, 'numbers') and value.numbers:
-                        attributes[key] = list(value.numbers)
-            
-            return {
-                "id": product.id if hasattr(product, 'id') else '',
-                "name": product.name if hasattr(product, 'name') else '',
-                "title": product.title if hasattr(product, 'title') else 'Untitled Product',
-                "description": product.description if hasattr(product, 'description') else '',
-                "categories": list(product.categories) if hasattr(product, 'categories') else [],
-                "brands": list(product.brands) if hasattr(product, 'brands') else [],
-                "price_info": price_info,
-                "availability": product.availability if hasattr(product, 'availability') else 'UNKNOWN',
-                "uri": product.uri if hasattr(product, 'uri') else '',
-                "images": images,
-                "attributes": attributes
+        """Convert Product protobuf to dict"""
+        print(f"\n   🔄 Converting product:")
+        print(f"      Raw product type: {type(product)}")
+        print(f"      Has priceInfo: {hasattr(product, 'priceInfo')}")
+        print(f"      Has price_info: {hasattr(product, 'price_info')}")
+        
+        # Extract price info (API uses priceInfo, not price_info)
+        price_info = None
+        if hasattr(product, 'priceInfo') and product.priceInfo:
+            pi = product.priceInfo
+            print(f"      PriceInfo object: {pi}")
+            price_info = {
+                "currency_code": pi.currencyCode if hasattr(pi, 'currencyCode') else 'USD',
+                "price": float(pi.price) if hasattr(pi, 'price') else 0.0,
+                "original_price": float(pi.originalPrice) if hasattr(pi, 'originalPrice') else None,
+                "cost": float(pi.cost) if hasattr(pi, 'cost') else None
             }
+        elif hasattr(product, 'price_info') and product.price_info:
+            # Fallback for snake_case
+            pi = product.price_info
+            price_info = {
+                "currency_code": pi.currency_code if hasattr(pi, 'currency_code') else 'USD',
+                "price": float(pi.price) if hasattr(pi, 'price') else 0.0,
+                "original_price": float(pi.original_price) if hasattr(pi, 'original_price') else None,
+                "cost": float(pi.cost) if hasattr(pi, 'cost') else None
+            }
+        
+        print(f"      Converted price_info: {price_info}")
+        
+        # Extract images
+        images = []
+        if hasattr(product, 'images') and product.images:
+            for img in product.images:
+                images.append({
+                    "uri": img.uri if hasattr(img, 'uri') else '',
+                    "height": img.height if hasattr(img, 'height') else 0,
+                    "width": img.width if hasattr(img, 'width') else 0
+                })
+        
+        # Extract attributes
+        attributes = {}
+        if hasattr(product, 'attributes') and product.attributes:
+            for key, value in product.attributes.items():
+                if hasattr(value, 'text') and value.text:
+                    attributes[key] = list(value.text)
+                elif hasattr(value, 'numbers') and value.numbers:
+                    attributes[key] = list(value.numbers)
+        
+        result = {
+            "id": product.id if hasattr(product, 'id') else '',
+            "name": product.name if hasattr(product, 'name') else '',
+            "title": product.title if hasattr(product, 'title') else 'Untitled Product',
+            "description": product.description if hasattr(product, 'description') else '',
+            "categories": list(product.categories) if hasattr(product, 'categories') else [],
+            "brands": list(product.brands) if hasattr(product, 'brands') else [],
+            "price_info": price_info,
+            "availability": product.availability if hasattr(product, 'availability') else 'UNKNOWN',
+            "uri": product.uri if hasattr(product, 'uri') else '',
+            "images": images,
+            "attributes": attributes
+        }
+        
+        print(f"      Final result title: {result['title']}")
+        print(f"      Final result price_info: {result['price_info']}")
+        
+        return result
 
 # Singleton instance
 retail_search_service = RetailSearchService()
