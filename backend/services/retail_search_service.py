@@ -1,5 +1,6 @@
 from google.cloud.retail_v2 import SearchServiceClient, CompletionServiceClient
 from google.cloud.retail_v2.types import SearchRequest, CompleteQueryRequest
+from google.protobuf import field_mask_pb2
 from typing import Dict, Any, List
 import uuid
 
@@ -34,6 +35,17 @@ class RetailSearchService:
         if not facet_specs:
             facet_specs = self._get_default_facet_specs()
         
+        # CRITICAL: Specify which product fields to return
+        # This tells the API to return full product data, not just references
+        content_search_spec = {
+            "snippet_spec": {
+                "return_snippet": False
+            },
+            "summary_spec": {
+                "summary_result_count": 0
+            }
+        }
+        
         # Build request
         request = SearchRequest(
             placement=placement,
@@ -43,7 +55,10 @@ class RetailSearchService:
             offset=offset,
             filter=filter,
             order_by=order_by,
-            facet_specs=facet_specs
+            facet_specs=facet_specs,
+            # Request full product details by setting boost spec
+            boost_spec={},
+            query_expansion_spec={"condition": "AUTO"},
         )
         
         try:
@@ -167,36 +182,31 @@ class RetailSearchService:
     
     def _convert_product_to_dict(self, product) -> Dict[str, Any]:
         """Convert Product protobuf to dict"""
-        print(f"\n   🔄 Converting product:")
-        print(f"      Raw product type: {type(product)}")
         
-        # Debug: Print ALL available attributes
-        print(f"      Available attributes: {dir(product)}")
+        # Extract product ID from name field (format: projects/.../products/PRODUCT_ID)
+        product_id = product.id
+        if not product_id and product.name:
+            product_id = product.name.split('/')[-1]
         
-        # Check what fields exist and have values
-        print(f"      product.id = '{product.id if hasattr(product, 'id') else 'N/A'}'")
-        print(f"      product.name = '{product.name if hasattr(product, 'name') else 'N/A'}'")
-        print(f"      product.title = '{product.title if hasattr(product, 'title') else 'N/A'}'")
-        print(f"      Has price_info: {hasattr(product, 'price_info')}")
+        # Check if we have actual product data or just reference
+        has_full_data = bool(product.title)
         
-        if hasattr(product, 'price_info') and product.price_info:
-            pi = product.price_info
-            print(f"      price_info object: {pi}")
-            print(f"      price_info.price = {pi.price if hasattr(pi, 'price') else 'N/A'}")
-            print(f"      price_info.currency_code = {pi.currency_code if hasattr(pi, 'currency_code') else 'N/A'}")
+        if not has_full_data:
+            print(f"   ⚠️  Product {product_id} returned without full data - only reference")
+            print(f"      This means the serving config 'default_search' needs to be configured")
+            print(f"      to return product fields in GCP Console")
         
         # Extract price info
         price_info = None
         if hasattr(product, 'price_info') and product.price_info:
             pi = product.price_info
-            price_info = {
-                "currency_code": pi.currency_code if hasattr(pi, 'currency_code') else 'USD',
-                "price": float(pi.price) if hasattr(pi, 'price') and pi.price else 0.0,
-                "original_price": float(pi.original_price) if hasattr(pi, 'original_price') and pi.original_price else None,
-                "cost": float(pi.cost) if hasattr(pi, 'cost') and pi.cost else None
-            }
-        
-        print(f"      Converted price_info: {price_info}")
+            if hasattr(pi, 'price') and pi.price:
+                price_info = {
+                    "currency_code": pi.currency_code if hasattr(pi, 'currency_code') else 'USD',
+                    "price": float(pi.price) if pi.price else 0.0,
+                    "original_price": float(pi.original_price) if hasattr(pi, 'original_price') and pi.original_price else None,
+                    "cost": float(pi.cost) if hasattr(pi, 'cost') and pi.cost else None
+                }
         
         # Extract images
         images = []
@@ -217,10 +227,10 @@ class RetailSearchService:
                 elif hasattr(value, 'numbers') and value.numbers:
                     attributes[key] = list(value.numbers)
         
-        result = {
-            "id": product.id if hasattr(product, 'id') else '',
+        return {
+            "id": product_id,
             "name": product.name if hasattr(product, 'name') else '',
-            "title": product.title if hasattr(product, 'title') else 'Untitled Product',
+            "title": product.title if product.title else f'Product {product_id}',
             "description": product.description if hasattr(product, 'description') else '',
             "categories": list(product.categories) if hasattr(product, 'categories') else [],
             "brands": list(product.brands) if hasattr(product, 'brands') else [],
@@ -230,11 +240,6 @@ class RetailSearchService:
             "images": images,
             "attributes": attributes
         }
-        
-        print(f"      Final result title: {result['title']}")
-        print(f"      Final result price_info: {result['price_info']}")
-        
-        return result
 
 # Singleton instance
 retail_search_service = RetailSearchService()
