@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 import uvicorn
 
 from config import settings
-from routers import search_router, products_router, recommendations_router
+from routers import search_router, products_router, recommendations_router, categories_router
 
 # Lifespan context manager for startup/shutdown events
 @asynccontextmanager
@@ -47,6 +47,7 @@ async def health_check():
 app.include_router(search_router, prefix="/api/search", tags=["Search"])
 app.include_router(products_router, prefix="/api/products", tags=["Products"])
 app.include_router(recommendations_router, prefix="/api/recommendations", tags=["Recommendations"])
+app.include_router(categories_router, prefix="/api/categories", tags=["Categories"])
 
 # Root endpoint
 @app.get("/")
