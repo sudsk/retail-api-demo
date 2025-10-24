@@ -29,3 +29,8 @@
   background-color: var(--primary-color);
   color: white;
 }
+
+.category-count {
+  font-size: 0.85em;
+  opacity: 0.8;
+}
