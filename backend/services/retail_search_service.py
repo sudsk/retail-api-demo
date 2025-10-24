@@ -169,28 +169,31 @@ class RetailSearchService:
         """Convert Product protobuf to dict"""
         print(f"\n   🔄 Converting product:")
         print(f"      Raw product type: {type(product)}")
-        print(f"      Has priceInfo: {hasattr(product, 'priceInfo')}")
+        
+        # Debug: Print ALL available attributes
+        print(f"      Available attributes: {dir(product)}")
+        
+        # Check what fields exist and have values
+        print(f"      product.id = '{product.id if hasattr(product, 'id') else 'N/A'}'")
+        print(f"      product.name = '{product.name if hasattr(product, 'name') else 'N/A'}'")
+        print(f"      product.title = '{product.title if hasattr(product, 'title') else 'N/A'}'")
         print(f"      Has price_info: {hasattr(product, 'price_info')}")
         
-        # Extract price info (API uses priceInfo, not price_info)
+        if hasattr(product, 'price_info') and product.price_info:
+            pi = product.price_info
+            print(f"      price_info object: {pi}")
+            print(f"      price_info.price = {pi.price if hasattr(pi, 'price') else 'N/A'}")
+            print(f"      price_info.currency_code = {pi.currency_code if hasattr(pi, 'currency_code') else 'N/A'}")
+        
+        # Extract price info
         price_info = None
-        if hasattr(product, 'priceInfo') and product.priceInfo:
-            pi = product.priceInfo
-            print(f"      PriceInfo object: {pi}")
-            price_info = {
-                "currency_code": pi.currencyCode if hasattr(pi, 'currencyCode') else 'USD',
-                "price": float(pi.price) if hasattr(pi, 'price') else 0.0,
-                "original_price": float(pi.originalPrice) if hasattr(pi, 'originalPrice') else None,
-                "cost": float(pi.cost) if hasattr(pi, 'cost') else None
-            }
-        elif hasattr(product, 'price_info') and product.price_info:
-            # Fallback for snake_case
+        if hasattr(product, 'price_info') and product.price_info:
             pi = product.price_info
             price_info = {
                 "currency_code": pi.currency_code if hasattr(pi, 'currency_code') else 'USD',
-                "price": float(pi.price) if hasattr(pi, 'price') else 0.0,
-                "original_price": float(pi.original_price) if hasattr(pi, 'original_price') else None,
-                "cost": float(pi.cost) if hasattr(pi, 'cost') else None
+                "price": float(pi.price) if hasattr(pi, 'price') and pi.price else 0.0,
+                "original_price": float(pi.original_price) if hasattr(pi, 'original_price') and pi.original_price else None,
+                "cost": float(pi.cost) if hasattr(pi, 'cost') and pi.cost else None
             }
         
         print(f"      Converted price_info: {price_info}")
