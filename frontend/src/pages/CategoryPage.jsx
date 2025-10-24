@@ -3,14 +3,11 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import Header from '../components/layout/Header';
 import Navigation from '../components/layout/Navigation';
 import Footer from '../components/layout/Footer';
-import SearchFilters from '../components/search/SearchFilters';
 import ProductGrid from '../components/product/ProductGrid';
-import SortDropdown from '../components/search/SortDropdown';
-import Pagination from '../components/search/Pagination';
 import Loader from '../components/common/Loader';
 import ErrorMessage from '../components/common/ErrorMessage';
-import useSearch from '../hooks/useSearch';
 import categoriesService from '../services/categories.service';
+import productsService from '../services/products.service';
 import './CategoryPage.css';
 
 const CategoryPage = () => {
@@ -19,14 +16,15 @@ const CategoryPage = () => {
   const page = parseInt(searchParams.get('page') || '1');
   const pageSize = 20;
 
-  const [sortBy, setSortBy] = useState('');
-  const [selectedFilters, setSelectedFilters] = useState({});
+  const [products, setProducts] = useState([]);
+  const [totalSize, setTotalSize] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [categoryName, setCategoryName] = useState('');
-  const [categoriesLoaded, setCategoriesLoaded] = useState(false);
-  
-  const { results, facets, totalSize, loading, error, search } = useSearch();
+  const [nextPageToken, setNextPageToken] = useState('');
+  const [pageTokens, setPageTokens] = useState(['']); // Track page tokens for pagination
 
-  // Fetch categories to get the actual category name from slug
+  // Fetch category name from slug
   useEffect(() => {
     const fetchCategoryName = async () => {
       try {
@@ -46,47 +44,71 @@ const CategoryPage = () => {
         }
       } catch (err) {
         console.error('Failed to fetch categories:', err);
-        // Fallback
         setCategoryName(
           categorySlug
             .split('-')
             .map(word => word.charAt(0).toUpperCase() + word.slice(1))
             .join(' ')
         );
-      } finally {
-        setCategoriesLoaded(true);
       }
     };
 
     fetchCategoryName();
   }, [categorySlug]);
 
+  // Fetch products using List Products API
   useEffect(() => {
-    // Don't search until we have the category name
-    if (!categoriesLoaded || !categoryName) return;
+    if (!categoryName) return;
 
-    const offset = (page - 1) * pageSize;
-    
-    // Build filter string with category
-    const filterParts = [`categories: ANY("${categoryName}")`];
-    
-    Object.entries(selectedFilters).forEach(([key, values]) => {
-      if (values && values.length > 0) {
-        const filterValues = values.map(v => `"${v}"`).join(', ');
-        filterParts.push(`${key}: ANY(${filterValues})`);
+    const fetchProducts = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        // Build filter for category - try different filter formats
+        // Try format 1: categories="Apparel" 
+        const filter = `categories="${categoryName}"`;
+        
+        console.log('Fetching with filter:', filter);
+        // Get page token for current page
+        const pageToken = pageTokens[page - 1] || '';
+
+        const data = await productsService.listProducts({
+          pageSize,
+          pageToken,
+          filter
+        });
+
+        setProducts(data.products || []);
+        setNextPageToken(data.next_page_token || '');
+        
+        // Store next page token if we got one
+        if (data.next_page_token && !pageTokens[page]) {
+          setPageTokens(prev => {
+            const newTokens = [...prev];
+            newTokens[page] = data.next_page_token;
+            return newTokens;
+          });
+        }
+
+        // Estimate total size (List API doesn't return total count)
+        // We'll just show if there's a next page
+        if (data.next_page_token) {
+          setTotalSize(page * pageSize + 1); // At least one more page
+        } else {
+          setTotalSize((page - 1) * pageSize + (data.products?.length || 0));
+        }
+
+      } catch (err) {
+        console.error('Failed to fetch products:', err);
+        setError(err.message || 'Failed to load products');
+      } finally {
+        setLoading(false);
       }
-    });
-    
-    const filterString = filterParts.join(' AND ');
+    };
 
-    search({
-      query: '',
-      pageSize,
-      offset,
-      orderBy: sortBy,
-      filter: filterString
-    });
-  }, [categoryName, categoriesLoaded, page, sortBy, selectedFilters, search, pageSize]);
+    fetchProducts();
+  }, [categoryName, page, pageSize, pageTokens]);
 
   const handlePageChange = (newPage) => {
     searchParams.set('page', newPage.toString());
@@ -94,22 +116,7 @@ const CategoryPage = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleSortChange = (newSort) => {
-    setSortBy(newSort);
-    searchParams.set('page', '1');
-    setSearchParams(searchParams);
-  };
-
-  const handleFilterChange = (facetKey, values) => {
-    setSelectedFilters(prev => ({
-      ...prev,
-      [facetKey]: values
-    }));
-    searchParams.set('page', '1');
-    setSearchParams(searchParams);
-  };
-
-  if (!categoriesLoaded) {
+  if (!categoryName) {
     return (
       <div className="category-page">
         <Header />
@@ -131,7 +138,8 @@ const CategoryPage = () => {
         <div className="category-header">
           <h1>{categoryName}</h1>
           <p className="category-count">
-            {totalSize} {totalSize === 1 ? 'product' : 'products'}
+            {products.length} {products.length === 1 ? 'product' : 'products'} on this page
+            {nextPageToken && ' (more available)'}
           </p>
         </div>
 
@@ -141,27 +149,33 @@ const CategoryPage = () => {
         
         {!loading && !error && (
           <div className="category-layout">
-            <aside className="filters-sidebar">
-              <SearchFilters
-                facets={facets}
-                selectedFilters={selectedFilters}
-                onFilterChange={handleFilterChange}
-              />
-            </aside>
+            <div className="products-container" style={{ gridColumn: '1 / -1' }}>
+              <ProductGrid products={products} />
 
-            <div className="products-container">
-              <div className="products-controls">
-                <SortDropdown value={sortBy} onChange={handleSortChange} />
+              {/* Simple pagination */}
+              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '2rem' }}>
+                {page > 1 && (
+                  <button 
+                    onClick={() => handlePageChange(page - 1)}
+                    className="pagination-button"
+                    style={{ padding: '0.75rem 1.5rem', cursor: 'pointer' }}
+                  >
+                    Previous
+                  </button>
+                )}
+                
+                <span style={{ padding: '0.75rem 1.5rem' }}>Page {page}</span>
+                
+                {nextPageToken && (
+                  <button 
+                    onClick={() => handlePageChange(page + 1)}
+                    className="pagination-button"
+                    style={{ padding: '0.75rem 1.5rem', cursor: 'pointer' }}
+                  >
+                    Next
+                  </button>
+                )}
               </div>
-
-              <ProductGrid products={results} />
-
-              <Pagination
-                currentPage={page}
-                totalSize={totalSize}
-                pageSize={pageSize}
-                onPageChange={handlePageChange}
-              />
             </div>
           </div>
         )}
