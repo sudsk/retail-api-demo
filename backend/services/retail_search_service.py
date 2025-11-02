@@ -1,8 +1,9 @@
-from google.cloud.retail_v2 import SearchServiceClient, CompletionServiceClient
-from google.cloud.retail_v2.types import SearchRequest, CompleteQueryRequest
+from google.cloud.retail_v2 import SearchServiceClient, CompletionServiceClient, ProductServiceClient
+from google.cloud.retail_v2.types import SearchRequest, CompleteQueryRequest, GetProductRequest
 from google.protobuf import field_mask_pb2
 from typing import Dict, Any, List
 import uuid
+import traceback
 
 from config import settings
 
@@ -10,6 +11,7 @@ class RetailSearchService:
     def __init__(self):
         self.search_client = SearchServiceClient()
         self.completion_client = CompletionServiceClient()
+        self.product_client = ProductServiceClient()
     
     async def search(
         self,
@@ -35,17 +37,6 @@ class RetailSearchService:
         if not facet_specs:
             facet_specs = self._get_default_facet_specs()
         
-        # CRITICAL: Specify which product fields to return
-        # This tells the API to return full product data, not just references
-        content_search_spec = {
-            "snippet_spec": {
-                "return_snippet": False
-            },
-            "summary_spec": {
-                "summary_result_count": 0
-            }
-        }
-        
         # Build request
         request = SearchRequest(
             placement=placement,
@@ -56,8 +47,6 @@ class RetailSearchService:
             filter=filter,
             order_by=order_by,
             facet_specs=facet_specs,
-            # Request full product details by setting boost spec
-            boost_spec={},
             query_expansion_spec={"condition": "AUTO"},
         )
         
@@ -66,12 +55,43 @@ class RetailSearchService:
             
             print(f"✅ SEARCH RESPONSE:")
             print(f"   Total products: {response.total_size}")
-            print(f"   Results returned: {len(list(response.results))}")
             
-            # Convert response to dict
+            # Convert results and fetch full data if needed
             results = []
             for idx, result in enumerate(response.results):
                 product_dict = self._convert_product_to_dict(result.product)
+                
+                # Check if we need to fetch full product data
+                product_id = product_dict.get('id')
+                title = product_dict.get('title', '')
+                
+                # If title is empty, fetch full product details
+                if (not title or title.strip() == '') and product_id:
+                    print(f"   🔄 Fetching full product data for {product_id}...")
+                    try:
+                        full_product_name = f"{settings.branch_path}/products/{product_id}"
+                        get_request = GetProductRequest(name=full_product_name)
+                        full_product = self.product_client.get_product(get_request)
+                        
+                        # Debug: Print raw product data
+                        print(f"      Raw product fetched:")
+                        print(f"        - id: {full_product.id}")
+                        print(f"        - title: {full_product.title}")
+                        print(f"        - has price_info: {hasattr(full_product, 'price_info')}")
+                        if hasattr(full_product, 'price_info') and full_product.price_info:
+                            print(f"        - price: {full_product.price_info.price}")
+                        print(f"        - has images: {hasattr(full_product, 'images')}")
+                        if hasattr(full_product, 'images') and full_product.images:
+                            print(f"        - images count: {len(full_product.images)}")
+                        
+                        product_dict = self._convert_product_to_dict(full_product)
+                        print(f"      ✅ Converted:")
+                        print(f"        - title: {product_dict.get('title')}")
+                        print(f"        - price: {product_dict.get('price_info')}")
+                        print(f"        - images: {len(product_dict.get('images', []))} images")
+                    except Exception as e:
+                        print(f"      ❌ Failed to fetch: {e}")
+                        traceback.print_exc()
                 
                 if idx < 3:  # Log first 3 products
                     print(f"   Product {idx + 1}:")
@@ -183,18 +203,10 @@ class RetailSearchService:
     def _convert_product_to_dict(self, product) -> Dict[str, Any]:
         """Convert Product protobuf to dict"""
         
-        # Extract product ID from name field (format: projects/.../products/PRODUCT_ID)
+        # Extract product ID from name field if id is empty
         product_id = product.id
         if not product_id and product.name:
             product_id = product.name.split('/')[-1]
-        
-        # Check if we have actual product data or just reference
-        has_full_data = bool(product.title)
-        
-        if not has_full_data:
-            print(f"   ⚠️  Product {product_id} returned without full data - only reference")
-            print(f"      This means the serving config 'default_search' needs to be configured")
-            print(f"      to return product fields in GCP Console")
         
         # Extract price info
         price_info = None
@@ -230,7 +242,7 @@ class RetailSearchService:
         return {
             "id": product_id,
             "name": product.name if hasattr(product, 'name') else '',
-            "title": product.title if product.title else '',  # Return empty string, not fallback
+            "title": product.title if product.title else '',
             "description": product.description if hasattr(product, 'description') else '',
             "categories": list(product.categories) if hasattr(product, 'categories') else [],
             "brands": list(product.brands) if hasattr(product, 'brands') else [],
