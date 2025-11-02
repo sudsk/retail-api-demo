@@ -39,8 +39,8 @@ const ProductCard = ({ product }) => {
         {formatPrice(productData.price_info)}
         
         {productData.availability && (
-          <span className={`availability ${productData.availability.toLowerCase()}`}>
-            {productData.availability.replace('_', ' ')}
+          <span className={`availability ${String(productData.availability).toLowerCase()}`}>
+            {String(productData.availability).replace('_', ' ')}
           </span>
         )}
       </div>
