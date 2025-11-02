@@ -67,10 +67,10 @@ const ProductDetailPage = () => {
                 {formatPrice(product.price_info)}
 
                 {product.availability && (
-                  <div className={`product-availability ${product.availability.toLowerCase()}`}>
+                  <div className={`product-availability ${String(product.availability).toLowerCase()}`}>
                     <span className="availability-label">Availability:</span>
                     <span className="availability-status">
-                      {product.availability.replace(/_/g, ' ')}
+                      {String(product.availability).replace(/_/g, ' ')}
                     </span>
                   </div>
                 )}
