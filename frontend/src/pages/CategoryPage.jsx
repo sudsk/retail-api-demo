@@ -17,7 +17,7 @@ const CategoryPage = () => {
   const { categorySlug } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const page = parseInt(searchParams.get('page') || '1');
-  const pageSize = 20;
+  const pageSize = 10;
 
   const [sortBy, setSortBy] = useState('');
   const [selectedFilters, setSelectedFilters] = useState({});
