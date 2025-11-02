@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import SearchBar from './SearchBar';
+import VisitorIdBox from './VisitorIdBox';
 import useTheme from '../../config/theme.config';
 import './Header.css';
 
@@ -30,7 +31,7 @@ const Header = () => {
         </div>
 
         <nav className="header-nav">
-          {/* Add navigation items if needed */}
+          <VisitorIdBox />
         </nav>
       </div>
     </header>
