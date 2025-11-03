@@ -12,7 +12,7 @@ import './SearchTestingPage.css';
 const SearchTestingPage = () => {
   const [query, setQuery] = useState('');
   const [activeQuery, setActiveQuery] = useState('');
-  const [pageSize, setPageSize] = useState(20);
+  const [pageSize, setPageSize] = useState(10);
   const [sortBy, setSortBy] = useState('');
   const [selectedFilters, setSelectedFilters] = useState({});
   const [searchTime, setSearchTime] = useState(0);
@@ -20,15 +20,17 @@ const SearchTestingPage = () => {
   const { results, facets, totalSize, loading, error, search } = useSearch();
 
   const handleSearch = (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     executeSearch();
   };
 
   const executeSearch = () => {
+    if (!query.trim()) return;
+    
     const startTime = performance.now();
     setActiveQuery(query);
     
-    // Build filter string
+    // Build filter string from selected facets
     const filterParts = [];
     Object.entries(selectedFilters).forEach(([key, values]) => {
       if (values && values.length > 0) {
@@ -55,13 +57,37 @@ const SearchTestingPage = () => {
       ...prev,
       [facetKey]: values
     }));
+    // Auto-search when filters change
+    setTimeout(executeSearch, 100);
   };
 
   const handleClearFilters = () => {
     setSelectedFilters({});
-    if (activeQuery) {
-      executeSearch();
-    }
+    executeSearch();
+  };
+
+  const handleSortChange = (newSort) => {
+    setSortBy(newSort);
+    executeSearch();
+  };
+
+  const handleExampleQuery = (exampleQuery) => {
+    setQuery(exampleQuery);
+    setTimeout(() => {
+      const startTime = performance.now();
+      setActiveQuery(exampleQuery);
+      
+      search({
+        query: exampleQuery,
+        pageSize,
+        offset: 0,
+        orderBy: sortBy,
+        filter: ''
+      }).then(() => {
+        const endTime = performance.now();
+        setSearchTime(Math.round(endTime - startTime));
+      });
+    }, 100);
   };
 
   return (
@@ -71,7 +97,7 @@ const SearchTestingPage = () => {
       <main className="container page-content">
         <div className="testing-header">
           <h1>🔍 Search API Testing</h1>
-          <p className="subtitle">Test Vertex AI Retail Search API capabilities</p>
+          <p className="subtitle">Test Vertex AI Retail Search API - powered by your catalog data</p>
         </div>
 
         {/* Search Controls */}
@@ -82,7 +108,7 @@ const SearchTestingPage = () => {
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Enter search query (e.g., 'drill', 'red hoodie', 'wireless mouse')"
+                placeholder="Enter search query (e.g., 'drill', 'paint', 'screwdriver')"
                 className="search-test-input"
               />
               <button type="submit" className="search-test-button">
@@ -107,19 +133,19 @@ const SearchTestingPage = () => {
 
             <div className="option-group">
               <label>Sort by:</label>
-              <SortDropdown value={sortBy} onChange={setSortBy} />
+              <SortDropdown value={sortBy} onChange={handleSortChange} />
             </div>
 
-            {Object.keys(selectedFilters).length > 0 && (
+            {Object.keys(selectedFilters).some(key => selectedFilters[key]?.length > 0) && (
               <button onClick={handleClearFilters} className="clear-filters-btn">
-                Clear Filters
+                Clear All Filters
               </button>
             )}
           </div>
         </div>
 
         {/* Search Results Info */}
-        {activeQuery && !loading && (
+        {activeQuery && !loading && !error && (
           <div className="search-results-info">
             <div className="info-cards">
               <div className="info-card">
@@ -135,8 +161,8 @@ const SearchTestingPage = () => {
                 <div className="info-value">{searchTime}ms</div>
               </div>
               <div className="info-card">
-                <div className="info-label">Results Shown</div>
-                <div className="info-value">{results.length}</div>
+                <div className="info-label">Showing</div>
+                <div className="info-value">{results.length} of {totalSize}</div>
               </div>
             </div>
           </div>
@@ -146,12 +172,13 @@ const SearchTestingPage = () => {
         
         {error && <ErrorMessage message={error} />}
         
-        {/* Results */}
+        {/* Results Layout with Facets */}
         {!loading && !error && activeQuery && (
           <div className="search-results-layout">
             {facets && facets.length > 0 && (
               <aside className="filters-sidebar">
-                <h3>Available Filters (from API)</h3>
+                <h3>Filters (from API)</h3>
+                <p className="filters-hint">Facets returned by Search API</p>
                 <SearchFilters
                   facets={facets}
                   selectedFilters={selectedFilters}
@@ -177,22 +204,22 @@ const SearchTestingPage = () => {
         {!activeQuery && !loading && (
           <div className="initial-state">
             <div className="initial-icon">🔍</div>
-            <h2>Start Testing Search API</h2>
-            <p>Enter a search query above to test the Retail Search API</p>
+            <h2>Test Retail Search API</h2>
+            <p>Enter a search query to test search quality, relevance, and performance</p>
             <div className="example-queries">
               <h4>Try these example queries:</h4>
               <div className="query-chips">
-                <button onClick={() => { setQuery('hoodie'); executeSearch(); }} className="query-chip">
-                  hoodie
+                <button onClick={() => handleExampleQuery('drill')} className="query-chip">
+                  drill
                 </button>
-                <button onClick={() => { setQuery('red shirt'); executeSearch(); }} className="query-chip">
-                  red shirt
+                <button onClick={() => handleExampleQuery('paint')} className="query-chip">
+                  paint
                 </button>
-                <button onClick={() => { setQuery('wireless'); executeSearch(); }} className="query-chip">
-                  wireless
+                <button onClick={() => handleExampleQuery('screwdriver')} className="query-chip">
+                  screwdriver
                 </button>
-                <button onClick={() => { setQuery('notebook'); executeSearch(); }} className="query-chip">
-                  notebook
+                <button onClick={() => handleExampleQuery('hammer')} className="query-chip">
+                  hammer
                 </button>
               </div>
             </div>
