@@ -67,10 +67,16 @@ const BrowseTestingPage = () => {
     executeBrowse();
   };
 
-  // Initial load
   React.useEffect(() => {
-    executeBrowse();
-  }, []);
+    // Initial load - browse all products
+    search({
+      query: '',
+      pageSize,
+      offset: 0,
+      filter: ''
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
   return (
     <div className="browse-testing-page">
