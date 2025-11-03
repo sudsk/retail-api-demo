@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
 import ProductGrid from '../components/product/ProductGrid';
@@ -15,7 +15,7 @@ const BrowseTestingPage = () => {
   
   const { results, facets, totalSize, loading, error, search } = useSearch();
 
-  const executeBrowse = () => {
+  const executeBrowse = useCallback(() => {
     // Build filter string from selected facets
     const filterParts = [];
     
@@ -38,7 +38,7 @@ const BrowseTestingPage = () => {
       offset: 0,
       filter: filterString
     });
-  };
+  }, [category, selectedFilters, pageSize, search]);
 
   const handleFilterChange = (facetKey, values) => {
     setSelectedFilters(prev => ({
@@ -56,7 +56,7 @@ const BrowseTestingPage = () => {
         query: '',
         pageSize,
         offset: 0,
-        filter: `categories: ANY("${cat}")`
+        filter: cat ? `categories: ANY("${cat}")` : ''
       });
     }, 100);
   };
@@ -67,16 +67,10 @@ const BrowseTestingPage = () => {
     executeBrowse();
   };
 
-  React.useEffect(() => {
-    // Initial load - browse all products
-    search({
-      query: '',
-      pageSize,
-      offset: 0,
-      filter: ''
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only run once on mount
+  // Initial load
+  useEffect(() => {
+    executeBrowse();
+  }, [executeBrowse]);
 
   return (
     <div className="browse-testing-page">
