@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { UserProvider } from './context/UserContext';
 import SearchTestingPage from './pages/SearchTestingPage';
+import BrowseTestingPage from './pages/BrowseTestingPage';
 import RecommendationsTestingPage from './pages/RecommendationsTestingPage';
 import './App.css';
 
@@ -12,6 +13,7 @@ function App() {
         <Routes>
           <Route path="/" element={<SearchTestingPage />} />
           <Route path="/search" element={<SearchTestingPage />} />
+          <Route path="/browse" element={<BrowseTestingPage />} />
           <Route path="/recommendations" element={<RecommendationsTestingPage />} />
         </Routes>
       </Router>
