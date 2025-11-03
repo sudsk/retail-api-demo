@@ -152,9 +152,16 @@
 
 .filters-sidebar h3 {
   font-size: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
   padding-bottom: 0.5rem;
   border-bottom: 2px solid #e0e0e0;
+}
+
+.filters-hint {
+  font-size: 0.75rem;
+  color: #999;
+  margin-bottom: 1rem;
+  font-style: italic;
 }
 
 .results-container {
