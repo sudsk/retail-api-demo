@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { UserProvider } from './context/UserContext';
 import SearchTestingPage from './pages/SearchTestingPage';
 import RecommendationsTestingPage from './pages/RecommendationsTestingPage';
-import ProductDetailPage from './pages/ProductDetailPage';
 import './App.css';
 
 function App() {
@@ -14,7 +13,6 @@ function App() {
           <Route path="/" element={<SearchTestingPage />} />
           <Route path="/search" element={<SearchTestingPage />} />
           <Route path="/recommendations" element={<RecommendationsTestingPage />} />
-          <Route path="/product/:productId" element={<ProductDetailPage />} />
         </Routes>
       </Router>
     </UserProvider>
