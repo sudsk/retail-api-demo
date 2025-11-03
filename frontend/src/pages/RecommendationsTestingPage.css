@@ -1,0 +1,270 @@
+.recommendations-testing-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Testing Controls */
+.testing-controls-panel {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.context-controls {
+  flex: 1;
+  min-width: 300px;
+}
+
+.control-group {
+  margin-bottom: 1rem;
+}
+
+.control-group label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.control-group input[type="checkbox"] {
+  cursor: pointer;
+}
+
+.context-input-group {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.context-input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+.context-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.clear-btn {
+  padding: 0.75rem 1rem;
+  background-color: #f0f0f0;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background-color 0.2s;
+}
+
+.clear-btn:hover {
+  background-color: #e0e0e0;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.test-all-btn {
+  padding: 0.75rem 1.5rem;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.test-all-btn:hover {
+  background-color: var(--secondary-color);
+}
+
+.clear-results-btn {
+  padding: 0.75rem 1.5rem;
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.clear-results-btn:hover {
+  background-color: #d32f2f;
+}
+
+/* Models Grid */
+.models-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.model-section {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.model-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e0e0e0;
+  background: #f8f9fa;
+}
+
+.model-info h2 {
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.model-description {
+  font-size: 0.875rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
+.requires-context {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  background-color: #fff3cd;
+  color: #856404;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.test-model-btn {
+  padding: 0.75rem 1.5rem;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+.test-model-btn:hover:not(:disabled) {
+  background-color: var(--secondary-color);
+}
+
+.test-model-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.model-content {
+  padding: 1.5rem;
+  min-height: 200px;
+}
+
+.model-stats {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: #e3f2fd;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  color: #1976d2;
+  font-weight: 500;
+}
+
+.recommendations-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.model-error {
+  padding: 1.5rem;
+  background: #ffebee;
+  border: 1px solid #ef5350;
+  border-radius: 4px;
+  color: #c62828;
+}
+
+.model-error p {
+  margin-bottom: 0.5rem;
+}
+
+.error-hint {
+  font-size: 0.875rem;
+  color: #e57373;
+}
+
+.no-recommendations {
+  text-align: center;
+  padding: 2rem;
+  background: #f5f5f5;
+  border-radius: 4px;
+  color: #666;
+}
+
+.no-recommendations .hint {
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+}
+
+.model-placeholder {
+  text-align: center;
+  padding: 3rem;
+  color: #999;
+  font-size: 1rem;
+}
+
+.no-models {
+  text-align: center;
+  padding: 4rem 2rem;
+}
+
+.no-models h3 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.no-models p {
+  color: #666;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .testing-controls-panel {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .model-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .test-model-btn {
+    width: 100%;
+  }
+
+  .recommendations-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+}
