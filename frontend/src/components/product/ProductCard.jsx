@@ -1,5 +1,4 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import ProductImage from './ProductImage';
 import './ProductCard.css';
 
@@ -9,7 +8,8 @@ const ProductCard = ({ product }) => {
   const formatPrice = (priceInfo) => {
     if (!priceInfo) return 'Price not available';
     const { currency_code, price, original_price } = priceInfo;
-    const symbol = currency_code === 'USD' ? '$' : currency_code;
+    const symbol = currency_code === 'USD' ? '
+ : currency_code;
     
     return (
       <div className="price-container">
@@ -22,7 +22,7 @@ const ProductCard = ({ product }) => {
   };
 
   return (
-    <Link to={`/product/${productData.id}`} className="product-card">
+    <div className="product-card">
       <ProductImage 
         images={productData.images} 
         alt={productData.title}
@@ -30,7 +30,7 @@ const ProductCard = ({ product }) => {
       />
       
       <div className="product-card-content">
-        <h3 className="product-title">{productData.title}</h3>
+        <h3 className="product-title">{productData.title || 'Untitled Product'}</h3>
         
         {productData.brands && productData.brands.length > 0 && (
           <p className="product-brand">{productData.brands[0]}</p>
@@ -38,13 +38,17 @@ const ProductCard = ({ product }) => {
         
         {formatPrice(productData.price_info)}
         
+        {productData.id && (
+          <p className="product-id">ID: {productData.id}</p>
+        )}
+        
         {productData.availability && (
           <span className={`availability ${String(productData.availability).toLowerCase()}`}>
             {String(productData.availability).replace('_', ' ')}
           </span>
         )}
       </div>
-    </Link>
+    </div>
   );
 };
 
