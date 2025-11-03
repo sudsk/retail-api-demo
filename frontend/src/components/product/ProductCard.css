@@ -5,13 +5,7 @@
   border: 1px solid #e0e0e0;
   border-radius: 8px;
   overflow: hidden;
-  transition: all 0.3s ease;
   height: 100%;
-}
-
-.product-card:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  transform: translateY(-4px);
 }
 
 .product-card-image {
@@ -45,6 +39,13 @@
   font-size: 0.875rem;
   color: #666;
   margin: 0;
+}
+
+.product-id {
+  font-size: 0.75rem;
+  color: #999;
+  margin: 0;
+  font-family: monospace;
 }
 
 .price-container {
