@@ -35,6 +35,12 @@ const Header = () => {
             🔍 Search Testing
           </Link>
           <Link 
+            to="/browse" 
+            className={`nav-tab ${isActive('/browse') ? 'active' : ''}`}
+          >
+            📂 Browse
+          </Link>
+          <Link 
             to="/recommendations" 
             className={`nav-tab ${isActive('/recommendations') ? 'active' : ''}`}
           >
