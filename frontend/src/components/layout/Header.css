@@ -8,6 +8,7 @@
 .header-content {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 2rem;
 }
 
@@ -17,27 +18,88 @@
   color: white;
   font-weight: bold;
   font-size: 1.5rem;
+  flex-shrink: 0;
 }
 
 .logo img {
-  max-height: 60px;  /* Increased from 40px - adjust this value */
+  max-height: 60px;
   width: auto;
   object-fit: contain;
 }
 
-/* Optional: Make logo even bigger on larger screens */
+.main-nav {
+  display: flex;
+  gap: 1.5rem;
+  flex: 1;
+  justify-content: center;
+}
+
+.nav-tab {
+  color: white;
+  padding: 0.75rem 1.25rem;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.2s;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.nav-tab:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.nav-tab.active {
+  background-color: rgba(255, 255, 255, 0.25);
+  font-weight: 600;
+}
+
+.header-actions {
+  flex-shrink: 0;
+}
+
+/* Responsive */
 @media (min-width: 768px) {
   .logo img {
-    max-height: 80px;  /* Even bigger on desktop */
+    max-height: 80px;
   }
 }
 
-.search-container {
-  flex: 1;
-  max-width: 600px;
+@media (max-width: 968px) {
+  .header-content {
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .logo {
+    order: 1;
+  }
+
+  .header-actions {
+    order: 2;
+    margin-left: auto;
+  }
+
+  .main-nav {
+    order: 3;
+    width: 100%;
+    justify-content: flex-start;
+    gap: 0.75rem;
+  }
+
+  .nav-tab {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
 }
 
-.header-nav {
-  display: flex;
-  gap: 1rem;
+@media (max-width: 640px) {
+  .main-nav {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .nav-tab {
+    width: 100%;
+    text-align: center;
+  }
 }
